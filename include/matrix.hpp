@@ -212,8 +212,7 @@ double Determinant(Matrix<T>& m)
  {
   for (int i = 0; i < m.rows; i++)
    det += pow(-1, i) * m[0][i] * Determinant(remove_rows_and_cols(m, 0, i));
- }
- else {
+ } else {
   det = m[0][0] * m[1][1] - m[1][0] * m[0][1];
  }
  return det;
@@ -227,7 +226,6 @@ Matrix<T> Matrix<T>::Inverse()
  for (int i = 0; i < rows; i++)
   for (int j = 0; j < cols; j++)
   {
-   
    m[i][j] = pow(-1, i + j) * Determinant(remove_rows_and_cols(*this, i, j));
   }
    Matrix newm(rows, cols);
