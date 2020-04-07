@@ -186,28 +186,6 @@ Matrix<T> Matrix<T>::operator*(Matrix<T>& m2)
 }
 
 template<class T>
-Matrix<T> Matrix<T>::Inverse()
-{
- double det = Determinant(*this);
- Matrix m(rows, cols);
- for (int i = 0; i < rows; i++)
-  for (int j = 0; j < cols; j++)
-  {
-   
-   m[i][j] = pow(-1, i + j) * Determinant(remove_rows_and_cols(*this, i, j));
-  }
-   Matrix newm(rows, cols);
- for (int i = 0; i < rows; i++)
-  for (int j = 0; j < cols; j++)
-  {
-   T el = m[j][i];
-   T newel = el / det;
-   newm[i][j] = newel;
-  }
- return newm;
-}
-
-template<class T>
 Matrix<T> remove_rows_and_cols(Matrix<T>& mat, int i, int j)
 {
  Matrix<T> m(mat.rows - 1, mat.cols - 1);
@@ -241,6 +219,27 @@ double Determinant(Matrix<T>& m)
  return det;
 }
 
+template<class T>
+Matrix<T> Matrix<T>::Inverse()
+{
+ double det = Determinant(*this);
+ Matrix m(rows, cols);
+ for (int i = 0; i < rows; i++)
+  for (int j = 0; j < cols; j++)
+  {
+   
+   m[i][j] = pow(-1, i + j) * Determinant(remove_rows_and_cols(*this, i, j));
+  }
+   Matrix newm(rows, cols);
+ for (int i = 0; i < rows; i++)
+  for (int j = 0; j < cols; j++)
+  {
+   T el = m[j][i];
+   T newel = el / det;
+   newm[i][j] = newel;
+  }
+ return newm;
+}
 
 #endif // INCLUDE_MATRIX_HPP_
 
