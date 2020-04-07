@@ -5,12 +5,16 @@
 
 #pragma once
 #include<math.h>
+#include<type_traits>
+#include<limits>
+
 template <class T>
 class Matrix
 {
 private:
  T **p;
  int rows, cols;
+ static_assert(std::is_arithmetic<T>::value, "Non arithmetic type");
 public:
  ~Matrix();
  Matrix();
@@ -23,13 +27,15 @@ public:
  Matrix<T> Inverse();
  T* operator[](int i) const;
  Matrix& operator=(const Matrix<T>& rhs);
- bool operator==(const Matrix<T>& rhs) const;
- bool operator!=(const Matrix<T>& rhs) const;
+ template<class V>
+ friend bool operator==(const Matrix<V>& m1, const Matrix<V>& m2);
+ template<class V>
+ friend bool operator!=(const Matrix<V>& m1, const Matrix<V>& m2);
  Matrix<T> operator+(Matrix<T>& m2);
  Matrix<T> operator-(Matrix<T>& m2);
  Matrix<T> operator*(Matrix<T>& m2);
- friend Matrix<T> remove_rows_and_cols(Matrix<T>& mat, int i, int j);
- friend double Determinant(Matrix<T>& m);
+ Matrix<T> remove_rows_and_cols(int i, int j);
+ double Determinant(Matrix<T> m);
 };
 
 template<class T>
@@ -119,24 +125,24 @@ Matrix<T>& Matrix<T>::operator=(const Matrix<T>& rhs)
 }
 
 template<class T>
-bool Matrix<T>::operator==(const Matrix<T>& rhs) const
+bool operator==(const Matrix<T>& m1, const Matrix<T>& m2)
 {
- if (rows != rhs.rows || cols != rhs.cols)
+ if (m1.rows != m2.rows || m1.cols != m2.cols)
   return false;
  else
  {
-  for (int i = 0; i < rows; i++)
-   for (int j = 0; j < cols; j++)
-    if (p[i][j] != rhs.p[i][j])
+  for (int i = 0; i < m1.rows; i++)
+   for (int j = 0; j < m1.cols; j++)
+    if (m1.p[i][j] != m2.p[i][j])
      return false;
  }
  return true;
 }
 
 template<class T>
-bool Matrix<T>::operator!=(const Matrix<T>& rhs) const
+bool operator!=(const Matrix<T>& m1, const Matrix<T>& m2)
 {
- return !(*this == rhs);
+ return !(m1 == m2);
 }
 
 template<class T>
@@ -186,34 +192,46 @@ Matrix<T> Matrix<T>::operator*(Matrix<T>& m2)
 }
 
 template<class T>
-Matrix<T> remove_rows_and_cols(Matrix<T>& mat, int i, int j)
+Matrix<T> Matrix<T>::remove_rows_and_cols(int i, int j)
 {
- Matrix<T> m(mat.rows - 1, mat.cols - 1);
- for (int a = 0; a < i; a++)
-  for (int b = 0; b < j; b++)
-   m[a][b] = mat[a][b];
- for (int a = i; a < mat.rows - 1; a++)
-  for (int b = 0; b < j; b++)
-   m[a][b] = mat[a + 1][b];
- for (int b = j; b < mat.cols - 1; b++)
-  for (int a = 0; a < i; a++)
-   m[a][b] = mat[a][b + 1];
- for (int a = i; a < mat.rows - 1; a++)
-  for (int b = j; b < mat.cols - 1; b++)
-   m[a][b] = mat[a + 1][b + 1];
+ Matrix<T> m(rows - 1, cols - 1);
+ int rownum = 0;
+ int colnum = 0;
+ for (int a = 0; a < rows; a++)
+ {
+  if (a != i)
+  {
+   for (int b = 0; b < cols; b++)
+   {
+    if (b != j)
+    {
+     m[rownum][colnum] = p[a][b];
+     colnum++;
+    }
+    else {
+     continue;
+    }
+   }
+   rownum++;
+   colnum = 0;
+  }
+  else {
+   continue;
+  }
+ }
  return m;
 }
 
 template<class T>
-double Determinant(Matrix<T>& m)
+double Matrix<T>::Determinant(Matrix<T> m)
 {
  double det = 0;
  if (m.rows > 2)
  {
   for (int i = 0; i < m.rows; i++)
-   det += pow(-1, i) * m[0][i] * Determinant(remove_rows_and_cols(m, 0, i));
+   det += pow(-1, i) * (int)m[0][i] * Determinant(m.remove_rows_and_cols(0, i));
  } else {
-  det = m[0][0] * m[1][1] - m[1][0] * m[0][1];
+  det = (int)m[0][0] * (int)m[1][1] - (int)m[1][0] * (int)m[0][1];
  }
  return det;
 }
@@ -226,7 +244,8 @@ Matrix<T> Matrix<T>::Inverse()
  for (int i = 0; i < rows; i++)
   for (int j = 0; j < cols; j++)
   {
-   m[i][j] = pow(-1, i + j) * Determinant(remove_rows_and_cols(*this, i, j));
+   
+   m[i][j] = pow(-1, i + j) * Determinant(this->remove_rows_and_cols(i, j));
   }
    Matrix newm(rows, cols);
  for (int i = 0; i < rows; i++)
@@ -237,6 +256,48 @@ Matrix<T> Matrix<T>::Inverse()
    newm[i][j] = newel;
   }
  return newm;
+}
+
+template<>
+bool operator==(const Matrix<double>& m1, const Matrix<double>& m2)
+{
+ if (m1.rows != m2.rows || m1.cols != m2.cols)
+  return false;
+ else
+ {
+  for (int i = 0; i < m1.rows; i++)
+   for (int j = 0; j < m1.cols; j++)
+    if (abs(m1[i][j] - m2[i][j]) > std::numeric_limits<double>::epsilon())
+     return false;
+ }
+ return true;
+}
+
+template<>
+bool operator!=(const Matrix<double>& m1, const Matrix<double>& m2)
+{
+ return !(m1 == m2);
+}
+
+template<>
+bool operator==(const Matrix<float>& m1, const Matrix<float>& m2)
+{
+ if (m1.rows != m2.rows || m1.cols != m2.cols)
+  return false;
+ else
+ {
+  for (int i = 0; i < m1.rows; i++)
+   for (int j = 0; j < m1.cols; j++)
+    if (abs(m1[i][j] - m2[i][j]) > std::numeric_limits<float>::epsilon())
+     return false;
+ }
+ return true;
+}
+
+template<>
+bool operator!=(const Matrix<float>& m1, const Matrix<float>& m2)
+{
+ return !(m1 == m2);
 }
 
 #endif // INCLUDE_MATRIX_HPP_
