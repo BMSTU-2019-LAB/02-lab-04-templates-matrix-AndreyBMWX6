@@ -207,15 +207,13 @@ Matrix<T> Matrix<T>::remove_rows_and_cols(int i, int j)
     {
      m[rownum][colnum] = p[a][b];
      colnum++;
-    }
-    else {
+    } else {
      continue;
     }
    }
    rownum++;
    colnum = 0;
-  }
-  else {
+  } else {
    continue;
   }
  }
@@ -229,9 +227,9 @@ double Matrix<T>::Determinant(Matrix<T> m)
  if (m.rows > 2)
  {
   for (int i = 0; i < m.rows; i++)
-   det += pow(-1, i) * (int)m[0][i] * Determinant(m.remove_rows_and_cols(0, i));
+   det += pow(-1, i) * m[0][i] * Determinant(m.remove_rows_and_cols(0, i));
  } else {
-  det = (int)m[0][0] * (int)m[1][1] - (int)m[1][0] * (int)m[0][1];
+  det = m[0][0] * m[1][1] - m[1][0] * m[0][1];
  }
  return det;
 }
@@ -244,7 +242,6 @@ Matrix<T> Matrix<T>::Inverse()
  for (int i = 0; i < rows; i++)
   for (int j = 0; j < cols; j++)
   {
-   
    m[i][j] = pow(-1, i + j) * Determinant(this->remove_rows_and_cols(i, j));
   }
    Matrix newm(rows, cols);
